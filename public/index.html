@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MPrint Services</title>
+  <link rel="icon" href="/img/icon.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <img class="brand-mark" src="/img/icon.png" alt="MPrint Services logo">
+      <span><strong>MPrint</strong><small>Services</small></span>
+    </a>
+    <a class="admin-link" href="/admin.html">Admin</a>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <span class="eyebrow">PRINT • COPY • CREATE</span>
+        <h1>Your prints,<br><em>made simple.</em></h1>
+        <p>Select a service, upload your photo, and we’ll prepare it for printing.</p>
+      </div>
+      <div class="hero-card">
+        <img src="/img/logo-full.png" alt="MPrint Services">
+        <span>EPSON L5390 · 003 Ink</span>
+      </div>
+    </section>
+
+    <section class="order-section">
+      <div class="section-heading">
+        <div><span class="step">01</span><h2>Place an order</h2></div>
+        <p>No account needed</p>
+      </div>
+      <form id="orderForm" class="order-form">
+        <div class="field wide">
+          <label for="service">Select service *</label>
+          <select id="service" name="serviceId" required>
+            <option value="">Loading services…</option>
+          </select>
+          <p id="serviceHint" class="field-hint"></p>
+        </div>
+        <div class="field">
+          <label for="quantity">Quantity *</label>
+          <div class="quantity-control">
+            <button type="button" id="minus" aria-label="Decrease">−</button>
+            <input id="quantity" name="quantity" type="number" min="1" max="500" value="1" required>
+            <button type="button" id="plus" aria-label="Increase">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <label for="customerName">Name</label>
+          <input id="customerName" name="customerName" maxlength="100" placeholder="Your name (optional)">
+        </div>
+        <div class="field">
+          <label for="contact">Contact</label>
+          <input id="contact" name="contact" maxlength="100" placeholder="Mobile / Facebook / Email">
+        </div>
+        <div class="field wide">
+          <label>Attach image</label>
+          <label class="upload-box" for="image">
+            <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp">
+            <span class="upload-icon">＋</span>
+            <strong id="uploadTitle">Choose a photo</strong>
+            <small>JPG, PNG, or WebP • Maximum 15 MB</small>
+          </label>
+          <div id="previewWrap" class="preview-wrap hidden">
+            <img id="preview" alt="Photo preview">
+            <button id="removeImage" type="button">Remove</button>
+          </div>
+        </div>
+        <div class="field wide">
+          <label for="notes">Special instructions</label>
+          <textarea id="notes" name="notes" maxlength="500" rows="3" placeholder="Background color, paper preference, or other notes…"></textarea>
+        </div>
+        <div class="order-footer wide">
+          <div><small>Estimated total</small><strong id="total">₱0.00</strong></div>
+          <button class="primary-button" type="submit">Submit order <span>→</span></button>
+        </div>
+        <p id="formMessage" class="form-message wide" role="alert"></p>
+      </form>
+    </section>
+
+    <section class="services-strip">
+      <p>Available services</p>
+      <div>Document Printing <span>•</span> Photocopy <span>•</span> Scan <span>•</span> Photo Printing <span>•</span> Rush ID <span>•</span> Lamination <span>•</span> Stickers</div>
+    </section>
+  </main>
+
+  <dialog id="successDialog">
+    <button class="dialog-close" id="closeDialog" aria-label="Close">×</button>
+    <div class="success-icon">✓</div>
+    <h2>Order received!</h2>
+    <p>Please save your reference number.</p>
+    <strong id="reference"></strong>
+    <p id="dialogTotal"></p>
+    <button class="primary-button" id="newOrder">Place another order</button>
+  </dialog>
+  <script src="/user.js"></script>
+</body>
+</html>

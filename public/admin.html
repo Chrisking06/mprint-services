@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin — MPrint Services</title>
+  <link rel="icon" href="/img/icon.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body class="admin-body">
+  <section id="loginShell" class="login-shell">
+    <form id="loginForm" class="login-card">
+      <a class="login-logo" href="/">
+        <img src="/img/logo-full.png" alt="MPrint Services logo">
+      </a>
+      <h1>Welcome back.</h1>
+      <p>Sign in to manage orders and prices.</p>
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" name="username" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <button class="primary-button" type="submit">Sign in</button>
+      <p id="loginMessage" class="form-message" role="alert"></p>
+    </form>
+  </section>
+
+  <div id="adminApp" class="admin-app hidden">
+    <aside class="sidebar">
+      <a class="brand" href="/">
+        <img class="brand-mark sidebar-logo" src="/img/icon.png" alt="MPrint Services logo">
+        <span><strong>MPrint</strong><small>Admin panel</small></span>
+      </a>
+      <button class="nav-button active" data-tab="orders">Orders</button>
+      <button class="nav-button" data-tab="prices">Services & prices</button>
+      <button id="logout" class="nav-button logout">Log out</button>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-top">
+        <div><h1 id="pageTitle">Orders</h1><p id="today"></p></div>
+        <a class="view-store" href="/" target="_blank">View customer page ↗</a>
+      </header>
+
+      <section id="ordersPanel" class="tab-panel">
+        <div class="stats">
+          <article class="stat-card"><small>Total orders</small><strong id="totalOrders">0</strong></article>
+          <article class="stat-card"><small>Items availed</small><strong id="totalItems">0</strong></article>
+          <article class="stat-card"><small>New orders</small><strong id="newOrders">0</strong></article>
+          <article class="stat-card"><small>Est. revenue</small><strong id="revenue">₱0</strong></article>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>All orders</h2><input id="orderSearch" type="search" placeholder="Search orders…"></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Reference</th><th>Date</th><th>Customer</th><th>Service</th><th>Qty</th><th>Total</th><th>Status</th><th>Files</th></tr></thead>
+              <tbody id="ordersBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="pricesPanel" class="tab-panel hidden">
+        <div class="panel">
+          <div class="panel-head"><h2>Service catalog & pricing</h2><input id="serviceSearch" type="search" placeholder="Search services…"></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Category</th><th>Service</th><th>Auto layout</th><th>Price (PHP)</th><th></th></tr></thead>
+              <tbody id="servicesBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+  <div id="toast" class="toast hidden"></div>
+  <script src="/admin.js"></script>
+</body>
+</html>

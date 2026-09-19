@@ -1,0 +1,24 @@
+{
+  "name": "mprint-services",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local-network ordering and print layout system for MPrint Services",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.2.0",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "express-session": "^1.18.2",
+    "multer": "^2.0.2",
+    "pdf-lib": "^1.17.1",
+    "sharp": "^0.34.3"
+  }
+}
