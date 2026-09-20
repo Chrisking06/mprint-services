@@ -1,0 +1,15 @@
+{
+  "name": "MPrint Services",
+  "short_name": "MPrint",
+  "description": "Order photo prints, Rush ID, lamination, Instax, and stickers from MPrint Services.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f6fb",
+  "theme_color": "#0f6fe0",
+  "icons": [
+    { "src": "/img/icon.png", "sizes": "any", "type": "image/png" },
+    { "src": "/img/logo.png", "sizes": "any", "type": "image/png", "purpose": "maskable" }
+  ]
+}

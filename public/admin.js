@@ -56,26 +56,26 @@ function renderOrders() {
   const orders = dashboard.orders.filter(order => Object.values(order).join(" ").toLowerCase().includes(query));
   document.querySelector("#ordersBody").innerHTML = orders.length ? orders.map(order => `
     <tr>
-      <td><strong>${escapeHtml(order.reference)}</strong></td>
-      <td>${new Date(order.created_at.replace(" ", "T")).toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" })}</td>
-      <td>${escapeHtml(order.customer_name || "Walk-in")}<br><small>${escapeHtml(order.contact || "")}</small></td>
-      <td class="service-cell">${escapeHtml(order.service_name)}</td>
-      <td>${order.quantity}</td>
-      <td>${escapeHtml((order.paper || "—").toUpperCase())}${order.crop_mode
-        ? `<br><small>${order.crop_mode === "fill" ? "cropped" : "buo"}</small>` : ""}</td>
-      <td>${order.sheets || "—"}</td>
-      <td>${peso(order.total)}</td>
-      <td>
+      <td data-label="Reference"><strong>${escapeHtml(order.reference)}</strong></td>
+      <td data-label="Date">${new Date(order.created_at.replace(" ", "T")).toLocaleString("en-PH", { dateStyle: "medium", timeStyle: "short" })}</td>
+      <td data-label="Customer"><span>${escapeHtml(order.customer_name || "Walk-in")}<br><small>${escapeHtml(order.contact || "")}</small></span></td>
+      <td class="service-cell" data-label="Service">${escapeHtml(order.service_name)}</td>
+      <td data-label="Qty">${order.quantity}</td>
+      <td data-label="Paper"><span>${escapeHtml((order.paper || "—").toUpperCase())}${order.crop_mode
+        ? `<br><small>${order.crop_mode === "fill" ? "cropped" : "buo"}</small>` : ""}</span></td>
+      <td data-label="Sheets">${order.sheets || "—"}</td>
+      <td data-label="Total">${peso(order.total)}</td>
+      <td data-label="Status">
         <select class="status-select" data-order="${order.id}">
           ${["New", "Processing", "Ready", "Completed", "Cancelled"].map(status =>
             `<option ${status === order.status ? "selected" : ""}>${status}</option>`).join("")}
         </select>
       </td>
-      <td>
+      <td data-label="Files"><span>
         ${order.file_name ? `<a class="table-action" href="/api/admin/orders/${order.id}/image">Image</a>` : "—"}
         ${order.file_name && dashboard.services.find(service => service.id === order.service_id)?.hasLayout
           ? `<a class="table-action" href="/api/admin/orders/${order.id}/layout.pdf" target="_blank">Print PDF</a>` : ""}
-      </td>
+      </span></td>
     </tr>
   `).join("") : '<tr><td class="empty-cell" colspan="10">No orders found.</td></tr>';
 
@@ -101,13 +101,13 @@ function renderServices() {
   const services = dashboard.services.filter(service => `${service.category} ${service.name}`.toLowerCase().includes(query));
   document.querySelector("#servicesBody").innerHTML = services.map(service => `
     <tr>
-      <td>${escapeHtml(service.category)}</td>
-      <td class="service-cell">${escapeHtml(service.name)}</td>
-      <td>${service.hasLayout ? "Yes" : "—"}</td>
-      <td class="service-cell">${service.papers?.length
+      <td data-label="Category">${escapeHtml(service.category)}</td>
+      <td class="service-cell" data-label="Service">${escapeHtml(service.name)}</td>
+      <td data-label="Auto layout">${service.hasLayout ? "Yes" : "—"}</td>
+      <td class="service-cell" data-label="Fits per sheet">${service.papers?.length
         ? escapeHtml(service.papers.map(paper => `${paper.id.toUpperCase()}: ${paper.perSheet || 1}`).join(" · "))
         : "—"}</td>
-      <td><input class="price-input" data-price="${service.id}" type="number" min="0" step="0.01" value="${service.price}"></td>
+      <td data-label="Price (PHP)"><input class="price-input" data-price="${service.id}" type="number" min="0" step="0.01" inputmode="decimal" value="${service.price}"></td>
       <td><button class="save-price" data-save="${service.id}">Save</button></td>
     </tr>
   `).join("");
