@@ -3,34 +3,6 @@ const path = require("path");
 const bcrypt = require("bcryptjs");
 
 const catalog = [
-  ["doc-text-bw-short", "Document Printing — Text Only", "B&W · Short", null],
-  ["doc-text-bw-long", "Document Printing — Text Only", "B&W · Long", null],
-  ["doc-text-partial-short", "Document Printing — Text Only", "Partially Colored · Short", null],
-  ["doc-text-partial-long", "Document Printing — Text Only", "Partially Colored · Long", null],
-  ["doc-text-full-short", "Document Printing — Text Only", "Fully Colored · Short", null],
-  ["doc-text-full-long", "Document Printing — Text Only", "Fully Colored · Long", null],
-  ["doc-picture-bw-short", "Document Printing — Text with Picture", "B&W · Short", null],
-  ["doc-picture-bw-long", "Document Printing — Text with Picture", "B&W · Long", null],
-  ["doc-picture-partial-short", "Document Printing — Text with Picture", "Partially Colored · Short", null],
-  ["doc-picture-partial-long", "Document Printing — Text with Picture", "Partially Colored · Long", null],
-  ["doc-picture-full-short", "Document Printing — Text with Picture", "Fully Colored · Short", null],
-  ["doc-picture-full-long", "Document Printing — Text with Picture", "Fully Colored · Long", null],
-  ["picture-bw-short", "Document Printing — Picture Only", "B&W · Short", null],
-  ["picture-bw-long", "Document Printing — Picture Only", "B&W · Long", null],
-  ["picture-partial-short", "Document Printing — Picture Only", "Partially Colored · Short", null],
-  ["picture-partial-long", "Document Printing — Picture Only", "Partially Colored · Long", null],
-  ["picture-full-short", "Document Printing — Picture Only", "Fully Colored · Short", null],
-  ["picture-full-long", "Document Printing — Picture Only", "Fully Colored · Long", null],
-  ["copy-bw-short", "Photocopy / Xerox", "B&W · Short", null],
-  ["copy-bw-long", "Photocopy / Xerox", "B&W · Long", null],
-  ["copy-partial-short", "Photocopy / Xerox", "Partially Colored · Short", null],
-  ["copy-partial-long", "Photocopy / Xerox", "Partially Colored · Long", null],
-  ["copy-full-short", "Photocopy / Xerox", "Fully Colored · Short", null],
-  ["copy-full-long", "Photocopy / Xerox", "Fully Colored · Long", null],
-  ["scan-partial-short", "Scan", "Partially Colored · Short", null],
-  ["scan-partial-long", "Scan", "Partially Colored · Long", null],
-  ["scan-full-short", "Scan", "Fully Colored · Short", null],
-  ["scan-full-long", "Scan", "Fully Colored · Long", null],
   ["lam-2r", "Lamination", "2R / Wallet Size", null],
   ["lam-3r", "Lamination", "3R Size", null],
   ["lam-4r", "Lamination", "4R Size", null],
@@ -173,6 +145,9 @@ async function seed(db) {
   for (const [index, item] of catalog.entries()) {
     await db.upsertService([item[0], item[1], item[2], item[3] ? JSON.stringify(item[3]) : null, index]);
   }
+  const keep = catalog.map(item => item[0]);
+  const placeholders = keep.map(() => "?").join(", ");
+  await db.run(`DELETE FROM services WHERE id NOT IN (${placeholders})`, keep);
 
   const adminCount = await db.get("SELECT COUNT(*) AS count FROM admins");
   if (!adminCount.count) {
