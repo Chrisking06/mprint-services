@@ -42,8 +42,13 @@
           </select>
           <p id="serviceHint" class="field-hint"></p>
         </div>
+        <div class="field wide hidden" id="paperField">
+          <label for="paper">Paper size *</label>
+          <select id="paper" name="paper"></select>
+          <p id="paperHint" class="field-hint"></p>
+        </div>
         <div class="field">
-          <label for="quantity">Quantity *</label>
+          <label for="quantity">Quantity * <span id="unitLabel"></span></label>
           <div class="quantity-control">
             <button type="button" id="minus" aria-label="Decrease">−</button>
             <input id="quantity" name="quantity" type="number" min="1" max="500" value="1" required>

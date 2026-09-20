@@ -2,6 +2,9 @@ const form = document.querySelector("#orderForm");
 const serviceSelect = document.querySelector("#service");
 const quantityInput = document.querySelector("#quantity");
 const imageInput = document.querySelector("#image");
+const paperField = document.querySelector("#paperField");
+const paperSelect = document.querySelector("#paper");
+const paperHint = document.querySelector("#paperHint");
 const previewWrap = document.querySelector("#previewWrap");
 const preview = document.querySelector("#preview");
 const message = document.querySelector("#formMessage");
@@ -40,22 +43,67 @@ function selectedService() {
   return services.find(service => service.id === serviceSelect.value);
 }
 
+const unitWords = { pcs: "(pieces)", set: "(sets)", sheet: "(sheets)" };
+
+function renderPaperOptions(service) {
+  if (!service?.papers?.length) {
+    paperField.classList.add("hidden");
+    paperSelect.innerHTML = "";
+    paperHint.textContent = "";
+    return;
+  }
+  paperField.classList.remove("hidden");
+  paperSelect.innerHTML = service.papers.map(paper => `
+    <option value="${paper.id}" ${paper.id === service.paper ? "selected" : ""}>
+      ${paper.name}${paper.perSheet ? ` — ${paper.perSheet} pcs kada sheet` : ""}
+    </option>
+  `).join("");
+}
+
+async function refreshLayoutHint() {
+  const service = selectedService();
+  if (!service?.hasLayout) {
+    paperHint.textContent = "";
+    return;
+  }
+  const params = new URLSearchParams({
+    serviceId: service.id,
+    quantity: Math.max(1, Number(quantityInput.value) || 1),
+    paper: paperSelect.value || service.paper || ""
+  });
+  try {
+    const response = await fetch(`/api/layout-estimate?${params}`);
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    const perSheet = result.perSheet ? `${result.perSheet} pcs kada sheet · ` : "";
+    paperHint.textContent = `${perSheet}${result.sheets} sheet(s) ng ${result.paperName}${result.landscape ? " (landscape)" : ""}`;
+  } catch (error) {
+    paperHint.textContent = error.message || "Hindi kasya sa paper size na ito.";
+  }
+}
+
 function updateEstimate() {
   const service = selectedService();
   const quantity = Math.max(1, Number(quantityInput.value) || 1);
   document.querySelector("#total").textContent = peso((service?.price || 0) * quantity);
   document.querySelector("#serviceHint").textContent = service?.hasLayout
-    ? "Photo required • A print-ready A4 PDF layout will be generated automatically."
+    ? "Photo required • The system lays it out to fit your chosen paper size."
     : service
       ? "You may attach an image if needed."
       : "";
+  document.querySelector("#unitLabel").textContent = service?.hasLayout ? unitWords[service.unit] || "" : "";
   imageInput.required = Boolean(service?.hasLayout);
   document.querySelector("#uploadTitle").textContent = service?.hasLayout
     ? "Choose the photo to auto-layout *"
     : "Choose a photo";
+  refreshLayoutHint();
 }
 
-serviceSelect.addEventListener("change", updateEstimate);
+serviceSelect.addEventListener("change", () => {
+  renderPaperOptions(selectedService());
+  updateEstimate();
+});
+paperSelect.addEventListener("change", refreshLayoutHint);
 quantityInput.addEventListener("input", updateEstimate);
 document.querySelector("#minus").addEventListener("click", () => {
   quantityInput.value = Math.max(1, Number(quantityInput.value) - 1);
@@ -89,13 +137,17 @@ form.addEventListener("submit", async event => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error);
     document.querySelector("#reference").textContent = result.reference;
-    document.querySelector("#dialogTotal").textContent = result.total
+    const price = result.total
       ? `Estimated total: ${peso(result.total)}`
       : "The shop will confirm the price.";
+    document.querySelector("#dialogTotal").textContent = result.sheets
+      ? `${price} · ${result.sheets} sheet(s) ng ${result.paperName}`
+      : price;
     dialog.showModal();
     form.reset();
     quantityInput.value = 1;
     previewWrap.classList.add("hidden");
+    renderPaperOptions(null);
     updateEstimate();
   } catch (error) {
     message.textContent = error.message || "Unable to submit the order.";

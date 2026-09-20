@@ -39,22 +39,72 @@ const catalog = [
   ["lam-a4", "Lamination", "A4 Size", null],
   ["lam-a5", "Lamination", "A5 Size", null],
   ["lam-nametag", "Lamination", "Nametag", null],
-  ["photo-1x1", "Photo Printing", "1×1 ID Photo", [{ width: 1, height: 1, count: 1 }]],
-  ["photo-2x2", "Photo Printing", "2×2 ID Photo", [{ width: 2, height: 2, count: 1 }]],
-  ["photo-passport", "Photo Printing", "Passport Size", [{ width: 1.38, height: 1.77, count: 1 }]],
-  ["photo-2r", "Photo Printing", "2R / Wallet Size", [{ width: 2.5, height: 3.5, count: 1 }]],
-  ["photo-3r", "Photo Printing", "3R Size", [{ width: 3.5, height: 5, count: 1 }]],
-  ["photo-4r", "Photo Printing", "4R Size", [{ width: 4, height: 6, count: 1 }]],
-  ["photo-5r", "Photo Printing", "5R Size", [{ width: 5, height: 7, count: 1 }]],
-  ["photo-a4", "Photo Printing", "A4 Size", [{ width: 8.0, height: 11.3, count: 1 }]],
-  ["rush-a", "Rush ID Packages", "SET A: 2×2 (2pcs), 1×1 (4pcs)", [{ width: 2, height: 2, count: 2 }, { width: 1, height: 1, count: 4 }]],
-  ["rush-b", "Rush ID Packages", "SET B: 1×1 (6pcs)", [{ width: 1, height: 1, count: 6 }]],
-  ["rush-c", "Rush ID Packages", "SET C: 2×2 (6pcs)", [{ width: 2, height: 2, count: 6 }]],
-  ["rush-d", "Rush ID Packages", "SET D: Passport (4pcs), 1×1 (3pcs)", [{ width: 1.38, height: 1.77, count: 4 }, { width: 1, height: 1, count: 3 }]],
-  ["instax-mini", "Instax — Polaroid Inspired", "Mini (10pcs)", [{ width: 2.13, height: 3.39, count: 10 }]],
-  ["instax-square", "Instax — Polaroid Inspired", "Square (8pcs)", [{ width: 2.83, height: 3.39, count: 8 }]],
-  ["instax-wide", "Instax — Polaroid Inspired", "Wide (5pcs)", [{ width: 4.25, height: 3.39, count: 5 }]],
-  ["sticker-a4", "Sticker Printing", "Print Only (A4)", [{ width: 8.0, height: 11.3, count: 1 }]]
+  ["photo-1x1", "Photo Printing", "1×1 ID Photo", {
+    pieces: [{ width: 1, height: 1, count: 1 }],
+    papers: ["2r", "3r", "4r", "5r", "a4"],
+    paper: "4r",
+    unit: "pcs"
+  }],
+  ["photo-2x2", "Photo Printing", "2×2 ID Photo", {
+    pieces: [{ width: 2, height: 2, count: 1 }],
+    papers: ["3r", "4r", "5r", "a4"],
+    paper: "4r",
+    unit: "pcs"
+  }],
+  ["photo-passport", "Photo Printing", "Passport Size", {
+    pieces: [{ width: 1.38, height: 1.77, count: 1 }],
+    papers: ["3r", "4r", "5r", "a4"],
+    paper: "4r",
+    unit: "pcs"
+  }],
+  ["photo-2r", "Photo Printing", "2R / Wallet Size", { fill: true, papers: ["2r"], paper: "2r", unit: "sheet" }],
+  ["photo-3r", "Photo Printing", "3R Size", { fill: true, papers: ["3r"], paper: "3r", unit: "sheet" }],
+  ["photo-4r", "Photo Printing", "4R Size", { fill: true, papers: ["4r"], paper: "4r", unit: "sheet" }],
+  ["photo-5r", "Photo Printing", "5R Size", { fill: true, papers: ["5r"], paper: "5r", unit: "sheet" }],
+  ["photo-a4", "Photo Printing", "A4 Size", { fill: true, papers: ["a4"], paper: "a4", unit: "sheet" }],
+  ["rush-a", "Rush ID Packages", "SET A: 2×2 (2pcs), 1×1 (4pcs)", {
+    pieces: [{ width: 2, height: 2, count: 2 }, { width: 1, height: 1, count: 4 }],
+    papers: ["3r", "4r", "5r", "a4"],
+    paper: "4r",
+    unit: "set"
+  }],
+  ["rush-b", "Rush ID Packages", "SET B: 1×1 (6pcs)", {
+    pieces: [{ width: 1, height: 1, count: 6 }],
+    papers: ["2r", "3r", "4r", "5r", "a4"],
+    paper: "3r",
+    unit: "set"
+  }],
+  ["rush-c", "Rush ID Packages", "SET C: 2×2 (6pcs)", {
+    pieces: [{ width: 2, height: 2, count: 6 }],
+    papers: ["4r", "5r", "a4"],
+    paper: "4r",
+    unit: "set"
+  }],
+  ["rush-d", "Rush ID Packages", "SET D: Passport (4pcs), 1×1 (3pcs)", {
+    pieces: [{ width: 1.38, height: 1.77, count: 4 }, { width: 1, height: 1, count: 3 }],
+    papers: ["3r", "4r", "5r", "a4"],
+    paper: "4r",
+    unit: "set"
+  }],
+  ["instax-mini", "Instax — Polaroid Inspired", "Mini (10pcs)", {
+    pieces: [{ width: 2.13, height: 3.39, count: 10 }],
+    papers: ["a4", "5r"],
+    paper: "a4",
+    unit: "set"
+  }],
+  ["instax-square", "Instax — Polaroid Inspired", "Square (8pcs)", {
+    pieces: [{ width: 2.83, height: 3.39, count: 8 }],
+    papers: ["a4"],
+    paper: "a4",
+    unit: "set"
+  }],
+  ["instax-wide", "Instax — Polaroid Inspired", "Wide (5pcs)", {
+    pieces: [{ width: 4.25, height: 3.39, count: 5 }],
+    papers: ["a4"],
+    paper: "a4",
+    unit: "set"
+  }],
+  ["sticker-a4", "Sticker Printing", "Print Only (A4)", { fill: true, papers: ["a4"], paper: "a4", unit: "sheet" }]
 ];
 
 function toMysql(sql) {
@@ -66,6 +116,17 @@ function toMysql(sql) {
 function sqliteApi(sqlite) {
   return {
     dialect: "sqlite",
+    async upsertService(row) {
+      sqlite.prepare(`
+        INSERT INTO services (id, category, name, layout_json, sort_order)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET
+          category = excluded.category,
+          name = excluded.name,
+          layout_json = excluded.layout_json,
+          sort_order = excluded.sort_order
+      `).run(...row);
+    },
     async get(sql, params = []) {
       return sqlite.prepare(sql).get(...params);
     },
@@ -82,6 +143,17 @@ function sqliteApi(sqlite) {
 function mysqlApi(pool) {
   return {
     dialect: "mysql",
+    async upsertService(row) {
+      await pool.query(`
+        INSERT INTO services (id, category, name, layout_json, sort_order)
+        VALUES (?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          category = VALUES(category),
+          name = VALUES(name),
+          layout_json = VALUES(layout_json),
+          sort_order = VALUES(sort_order)
+      `, row);
+    },
     async get(sql, params = []) {
       const [rows] = await pool.query(toMysql(sql), params);
       return rows[0];
@@ -99,10 +171,7 @@ function mysqlApi(pool) {
 
 async function seed(db) {
   for (const [index, item] of catalog.entries()) {
-    await db.run(
-      "INSERT OR IGNORE INTO services (id, category, name, layout_json, sort_order) VALUES (?, ?, ?, ?, ?)",
-      [item[0], item[1], item[2], item[3] ? JSON.stringify(item[3]) : null, index]
-    );
+    await db.upsertService([item[0], item[1], item[2], item[3] ? JSON.stringify(item[3]) : null, index]);
   }
 
   const adminCount = await db.get("SELECT COUNT(*) AS count FROM admins");
@@ -164,10 +233,18 @@ async function openDatabase() {
         original_name VARCHAR(255),
         file_mime VARCHAR(80),
         file_data LONGBLOB,
+        paper VARCHAR(20),
+        sheets INT,
         status VARCHAR(32) NOT NULL DEFAULT 'New',
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    const [existing] = await pool.query(
+      "SELECT column_name AS name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'orders'"
+    );
+    const names = existing.map(column => column.name || column.NAME);
+    if (!names.includes("paper")) await pool.query("ALTER TABLE orders ADD COLUMN paper VARCHAR(20)");
+    if (!names.includes("sheets")) await pool.query("ALTER TABLE orders ADD COLUMN sheets INT");
     const db = mysqlApi(pool);
     await seed(db);
     console.log("Using MySQL database.");
@@ -209,6 +286,8 @@ async function openDatabase() {
       original_name TEXT,
       file_mime TEXT,
       file_data BLOB,
+      paper TEXT,
+      sheets INTEGER,
       status TEXT NOT NULL DEFAULT 'New',
       created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
     );
@@ -216,6 +295,8 @@ async function openDatabase() {
   const columns = sqlite.prepare("PRAGMA table_info(orders)").all().map(column => column.name);
   if (!columns.includes("file_data")) sqlite.exec("ALTER TABLE orders ADD COLUMN file_data BLOB");
   if (!columns.includes("file_mime")) sqlite.exec("ALTER TABLE orders ADD COLUMN file_mime TEXT");
+  if (!columns.includes("paper")) sqlite.exec("ALTER TABLE orders ADD COLUMN paper TEXT");
+  if (!columns.includes("sheets")) sqlite.exec("ALTER TABLE orders ADD COLUMN sheets INTEGER");
   const db = sqliteApi(sqlite);
   await seed(db);
   return db;

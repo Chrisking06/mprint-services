@@ -61,6 +61,8 @@ function renderOrders() {
       <td>${escapeHtml(order.customer_name || "Walk-in")}<br><small>${escapeHtml(order.contact || "")}</small></td>
       <td class="service-cell">${escapeHtml(order.service_name)}</td>
       <td>${order.quantity}</td>
+      <td>${escapeHtml((order.paper || "—").toUpperCase())}</td>
+      <td>${order.sheets || "—"}</td>
       <td>${peso(order.total)}</td>
       <td>
         <select class="status-select" data-order="${order.id}">
@@ -74,7 +76,7 @@ function renderOrders() {
           ? `<a class="table-action" href="/api/admin/orders/${order.id}/layout.pdf" target="_blank">Print PDF</a>` : ""}
       </td>
     </tr>
-  `).join("") : '<tr><td class="empty-cell" colspan="8">No orders found.</td></tr>';
+  `).join("") : '<tr><td class="empty-cell" colspan="10">No orders found.</td></tr>';
 
   document.querySelectorAll(".status-select").forEach(select => {
     select.addEventListener("change", async () => {
@@ -101,6 +103,9 @@ function renderServices() {
       <td>${escapeHtml(service.category)}</td>
       <td class="service-cell">${escapeHtml(service.name)}</td>
       <td>${service.hasLayout ? "Yes" : "—"}</td>
+      <td class="service-cell">${service.papers?.length
+        ? escapeHtml(service.papers.map(paper => `${paper.id.toUpperCase()}: ${paper.perSheet || 1}`).join(" · "))
+        : "—"}</td>
       <td><input class="price-input" data-price="${service.id}" type="number" min="0" step="0.01" value="${service.price}"></td>
       <td><button class="save-price" data-save="${service.id}">Save</button></td>
     </tr>

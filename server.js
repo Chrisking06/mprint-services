@@ -10,13 +10,17 @@ const bcrypt = require("bcryptjs");
 const sharp = require("sharp");
 const { PDFDocument, rgb, pushGraphicsState, popGraphicsState, moveTo, lineTo, closePath, clip, endPath } = require("pdf-lib");
 const { openDatabase } = require("./db");
+const { plan, paperChoices } = require("./layouts");
+
+const INCH = 72;
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const isProduction = process.env.NODE_ENV === "production";
 const ORDER_COLUMNS = `
   id, reference, customer_name, contact, service_id, service_name, quantity,
-  unit_price, total, notes, file_name, original_name, file_mime, status, created_at
+  unit_price, total, notes, file_name, original_name, file_mime, paper, sheets,
+  status, created_at
 `;
 
 const upload = multer({
@@ -33,82 +37,63 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-function hasLayout(value) {
-  return Boolean(value);
+function parseLayout(value) {
+  if (!value) return null;
+  return typeof value === "string" ? JSON.parse(value) : value;
 }
 
-async function createPhotoLayout(imageInput, layout, orderQuantity) {
+async function createPhotoLayout(imageInput, spec, paperId, units) {
+  const layout = plan(spec, paperId, units);
   const pdf = await PDFDocument.create();
-  const pageWidth = 595.28;
-  const pageHeight = 841.89;
-  const margin = 8.5;
-  const gap = 8.5;
   const imageBytes = await sharp(imageInput).rotate().jpeg({ quality: 95 }).toBuffer();
   const image = await pdf.embedJpg(imageBytes);
-  const items = [];
-  for (let set = 0; set < orderQuantity; set++) {
-    layout.forEach(spec => {
-      for (let i = 0; i < spec.count; i++) items.push({ width: spec.width * 72, height: spec.height * 72 });
-    });
+  const pageWidth = layout.pageWidth * INCH;
+  const pageHeight = layout.pageHeight * INCH;
+  const margin = layout.margin * INCH;
+
+  for (const sheet of layout.sheets) {
+    const page = pdf.addPage([pageWidth, pageHeight]);
+    for (const slot of sheet) {
+      const width = slot.width * INCH;
+      const height = slot.height * INCH;
+      const x = margin + slot.x * INCH;
+      const yTop = pageHeight - margin - slot.top * INCH;
+
+      const sourceRatio = image.width / image.height;
+      const targetRatio = width / height;
+      const drawHeight = sourceRatio > targetRatio ? height : width / sourceRatio;
+      const drawWidth = sourceRatio > targetRatio ? height * sourceRatio : width;
+      const cropX = (drawWidth - width) / 2;
+      const cropY = (drawHeight - height) / 2;
+
+      page.pushOperators(pushGraphicsState());
+      page.pushOperators(
+        moveTo(x, yTop - height),
+        lineTo(x + width, yTop - height),
+        lineTo(x + width, yTop),
+        lineTo(x, yTop),
+        closePath(),
+        clip(),
+        endPath()
+      );
+      page.drawImage(image, {
+        x: x - cropX,
+        y: yTop - height - cropY,
+        width: drawWidth,
+        height: drawHeight
+      });
+      page.pushOperators(popGraphicsState());
+      page.drawRectangle({
+        x,
+        y: yTop - height,
+        width,
+        height,
+        borderColor: rgb(0.72, 0.72, 0.72),
+        borderWidth: 0.4
+      });
+    }
   }
 
-  let page = pdf.addPage([pageWidth, pageHeight]);
-  let x = margin;
-  let yTop = pageHeight - margin;
-  let rowHeight = 0;
-  for (const item of items) {
-    if (x + item.width > pageWidth - margin + 0.1) {
-      x = margin;
-      yTop -= rowHeight + gap;
-      rowHeight = 0;
-    }
-    if (yTop - item.height < margin) {
-      page = pdf.addPage([pageWidth, pageHeight]);
-      x = margin;
-      yTop = pageHeight - margin;
-      rowHeight = 0;
-    }
-    const sourceRatio = image.width / image.height;
-    const targetRatio = item.width / item.height;
-    let drawWidth;
-    let drawHeight;
-    if (sourceRatio > targetRatio) {
-      drawHeight = item.height;
-      drawWidth = drawHeight * sourceRatio;
-    } else {
-      drawWidth = item.width;
-      drawHeight = drawWidth / sourceRatio;
-    }
-    const cropX = (drawWidth - item.width) / 2;
-    const cropY = (drawHeight - item.height) / 2;
-    page.pushOperators(pushGraphicsState());
-    page.pushOperators(
-      moveTo(x, yTop - item.height),
-      lineTo(x + item.width, yTop - item.height),
-      lineTo(x + item.width, yTop),
-      lineTo(x, yTop),
-      closePath(),
-      clip(),
-      endPath()
-    );
-    page.drawImage(image, {
-      x: x - cropX,
-      y: yTop - item.height - cropY,
-      width: drawWidth,
-      height: drawHeight
-    });
-    page.pushOperators(popGraphicsState());
-    page.drawRectangle({
-      x,
-      y: yTop - item.height,
-      width: item.width,
-      height: item.height,
-      borderColor: rgb(0.72, 0.72, 0.72),
-      borderWidth: 0.4
-    });
-    x += item.width + gap;
-    rowHeight = Math.max(rowHeight, item.height);
-  }
   return pdf.save();
 }
 
@@ -136,7 +121,38 @@ async function start() {
   app.get("/api/services", async (_req, res, next) => {
     try {
       const rows = await db.all("SELECT * FROM services WHERE active = 1 ORDER BY sort_order");
-      res.json(rows.map(({ layout_json, ...row }) => ({ ...row, hasLayout: hasLayout(layout_json) })));
+      res.json(rows.map(({ layout_json, ...row }) => {
+        const spec = parseLayout(layout_json);
+        return {
+          ...row,
+          hasLayout: Boolean(spec),
+          unit: spec?.unit || "pcs",
+          papers: spec ? paperChoices(spec) : [],
+          paper: spec?.paper || null
+        };
+      }));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  app.get("/api/layout-estimate", async (req, res, next) => {
+    try {
+      const service = await db.get("SELECT * FROM services WHERE id = ? AND active = 1", [req.query.serviceId]);
+      const spec = parseLayout(service?.layout_json);
+      if (!spec) return res.json({ hasLayout: false });
+      const quantity = Math.min(Math.max(Number.parseInt(req.query.quantity, 10) || 1, 1), 500);
+      const layout = plan(spec, req.query.paper, quantity);
+      res.json({
+        hasLayout: true,
+        paper: layout.paper.id,
+        paperName: layout.paper.name,
+        sheets: layout.sheetCount,
+        pieces: layout.pieceCount,
+        perSheet: layout.perSheet,
+        landscape: layout.landscape,
+        unit: spec.unit || "pcs"
+      });
     } catch (error) {
       next(error);
     }
@@ -148,14 +164,16 @@ async function start() {
       if (!service) throw new Error("Please select a valid service.");
       const quantity = Number.parseInt(req.body.quantity, 10);
       if (!Number.isInteger(quantity) || quantity < 1 || quantity > 500) throw new Error("Quantity must be from 1 to 500.");
-      if (service.layout_json && !req.file) throw new Error("An image is required for this print layout.");
+      const spec = parseLayout(service.layout_json);
+      if (spec && !req.file) throw new Error("An image is required for this print layout.");
+      const layout = spec ? plan(spec, req.body.paper, quantity) : null;
 
       const reference = `MP-${new Date().toISOString().slice(2, 10).replaceAll("-", "")}-${crypto.randomInt(1000, 9999)}`;
       const total = Number(service.price) * quantity;
       const result = await db.run(`
         INSERT INTO orders
-        (reference, customer_name, contact, service_id, service_name, quantity, unit_price, total, notes, file_name, original_name, file_mime, file_data)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (reference, customer_name, contact, service_id, service_name, quantity, unit_price, total, notes, file_name, original_name, file_mime, file_data, paper, sheets)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         reference,
         String(req.body.customerName || "").trim().slice(0, 100),
@@ -169,13 +187,17 @@ async function start() {
         req.file ? `${Date.now()}-${crypto.randomUUID()}${path.extname(req.file.originalname).toLowerCase()}` : null,
         req.file?.originalname || null,
         req.file?.mimetype || null,
-        req.file?.buffer || null
+        req.file?.buffer || null,
+        layout?.paper.id || null,
+        layout?.sheetCount || null
       ]);
       res.status(201).json({
         id: result.lastInsertId,
         reference,
         total,
-        hasLayout: hasLayout(service.layout_json)
+        hasLayout: Boolean(spec),
+        paperName: layout?.paper.name || null,
+        sheets: layout?.sheetCount || null
       });
     } catch (error) {
       res.status(400).json({ error: error.message });
@@ -211,7 +233,15 @@ async function start() {
       `);
       const orders = await db.all(`SELECT ${ORDER_COLUMNS} FROM orders ORDER BY id DESC LIMIT 500`);
       const services = (await db.all("SELECT * FROM services ORDER BY sort_order"))
-        .map(({ layout_json, ...service }) => ({ ...service, hasLayout: hasLayout(layout_json) }));
+        .map(({ layout_json, ...service }) => {
+          const spec = parseLayout(layout_json);
+          return {
+            ...service,
+            hasLayout: Boolean(spec),
+            unit: spec?.unit || null,
+            papers: spec ? paperChoices(spec) : []
+          };
+        });
       res.json({
         summary: {
           ...summary,
@@ -260,7 +290,7 @@ async function start() {
   app.get("/api/admin/orders/:id/layout.pdf", requireAdmin, async (req, res, next) => {
     try {
       const order = await db.get(`
-        SELECT o.reference, o.quantity, o.file_name, o.file_data, s.layout_json
+        SELECT o.reference, o.quantity, o.paper, o.file_name, o.file_data, s.layout_json
         FROM orders o JOIN services s ON s.id = o.service_id WHERE o.id = ?
       `, [req.params.id]);
       const image = order?.file_data
@@ -268,8 +298,9 @@ async function start() {
         : order?.file_name
           ? path.join(__dirname, "data", "uploads", order.file_name)
           : null;
-      if (!image || !order.layout_json) return res.status(404).send("No printable layout is available.");
-      const pdf = await createPhotoLayout(image, JSON.parse(order.layout_json), order.quantity);
+      const spec = parseLayout(order?.layout_json);
+      if (!image || !spec) return res.status(404).send("No printable layout is available.");
+      const pdf = await createPhotoLayout(image, spec, order.paper, order.quantity);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="${order.reference}-layout.pdf"`);
       res.send(Buffer.from(pdf));
