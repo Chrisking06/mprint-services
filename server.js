@@ -8,7 +8,7 @@ const session = require("express-session");
 const multer = require("multer");
 const bcrypt = require("bcryptjs");
 const sharp = require("sharp");
-const { PDFDocument, rgb, pushGraphicsState, popGraphicsState, moveTo, lineTo, closePath, clip, endPath } = require("pdf-lib");
+const { PDFDocument, rgb } = require("pdf-lib");
 const { openDatabase } = require("./db");
 const { plan, paperChoices } = require("./layouts");
 
@@ -20,7 +20,7 @@ const isProduction = process.env.NODE_ENV === "production";
 const ORDER_COLUMNS = `
   id, reference, customer_name, contact, service_id, service_name, quantity,
   unit_price, total, notes, file_name, original_name, file_mime, paper, sheets,
-  status, created_at
+  crop_mode, status, created_at
 `;
 
 const upload = multer({
@@ -42,50 +42,55 @@ function parseLayout(value) {
   return typeof value === "string" ? JSON.parse(value) : value;
 }
 
-async function createPhotoLayout(imageInput, spec, paperId, units) {
+const CROP_MODES = ["whole", "fill"];
+const PRINT_DPI = 300;
+
+// Renders the photo at the exact piece size.
+// "whole" keeps the entire photo (white edges, nothing cut).
+// "fill" fills the piece but crops from the bottom, so hair and the top of the head stay.
+async function renderPiece(imageInput, widthInches, heightInches, cropMode) {
+  const width = Math.round(widthInches * PRINT_DPI);
+  const height = Math.round(heightInches * PRINT_DPI);
+  return sharp(imageInput)
+    .rotate()
+    .resize({
+      width,
+      height,
+      fit: cropMode === "fill" ? "cover" : "contain",
+      position: "top",
+      background: { r: 255, g: 255, b: 255, alpha: 1 }
+    })
+    .jpeg({ quality: 92, chromaSubsampling: "4:4:4" })
+    .toBuffer();
+}
+
+async function createPhotoLayout(imageInput, spec, paperId, units, cropMode) {
   const layout = plan(spec, paperId, units);
   const pdf = await PDFDocument.create();
-  const imageBytes = await sharp(imageInput).rotate().jpeg({ quality: 95 }).toBuffer();
-  const image = await pdf.embedJpg(imageBytes);
   const pageWidth = layout.pageWidth * INCH;
   const pageHeight = layout.pageHeight * INCH;
   const margin = layout.margin * INCH;
+  const mode = CROP_MODES.includes(cropMode) ? cropMode : "whole";
 
+  // One rendered image per distinct piece size, reused across every sheet.
+  const rendered = new Map();
   for (const sheet of layout.sheets) {
     const page = pdf.addPage([pageWidth, pageHeight]);
     for (const slot of sheet) {
+      const key = `${slot.width}x${slot.height}`;
+      if (!rendered.has(key)) {
+        const bytes = await renderPiece(imageInput, slot.width, slot.height, mode);
+        rendered.set(key, await pdf.embedJpg(bytes));
+      }
       const width = slot.width * INCH;
       const height = slot.height * INCH;
       const x = margin + slot.x * INCH;
-      const yTop = pageHeight - margin - slot.top * INCH;
+      const yBottom = pageHeight - margin - slot.top * INCH - height;
 
-      const sourceRatio = image.width / image.height;
-      const targetRatio = width / height;
-      const drawHeight = sourceRatio > targetRatio ? height : width / sourceRatio;
-      const drawWidth = sourceRatio > targetRatio ? height * sourceRatio : width;
-      const cropX = (drawWidth - width) / 2;
-      const cropY = (drawHeight - height) / 2;
-
-      page.pushOperators(pushGraphicsState());
-      page.pushOperators(
-        moveTo(x, yTop - height),
-        lineTo(x + width, yTop - height),
-        lineTo(x + width, yTop),
-        lineTo(x, yTop),
-        closePath(),
-        clip(),
-        endPath()
-      );
-      page.drawImage(image, {
-        x: x - cropX,
-        y: yTop - height - cropY,
-        width: drawWidth,
-        height: drawHeight
-      });
-      page.pushOperators(popGraphicsState());
+      page.drawImage(rendered.get(key), { x, y: yBottom, width, height });
       page.drawRectangle({
         x,
-        y: yTop - height,
+        y: yBottom,
         width,
         height,
         borderColor: rgb(0.72, 0.72, 0.72),
@@ -168,12 +173,13 @@ async function start() {
       if (spec && !req.file) throw new Error("An image is required for this print layout.");
       const layout = spec ? plan(spec, req.body.paper, quantity) : null;
 
+      const cropMode = CROP_MODES.includes(req.body.cropMode) ? req.body.cropMode : "whole";
       const reference = `MP-${new Date().toISOString().slice(2, 10).replaceAll("-", "")}-${crypto.randomInt(1000, 9999)}`;
       const total = Number(service.price) * quantity;
       const result = await db.run(`
         INSERT INTO orders
-        (reference, customer_name, contact, service_id, service_name, quantity, unit_price, total, notes, file_name, original_name, file_mime, file_data, paper, sheets)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (reference, customer_name, contact, service_id, service_name, quantity, unit_price, total, notes, file_name, original_name, file_mime, file_data, paper, sheets, crop_mode)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `, [
         reference,
         String(req.body.customerName || "").trim().slice(0, 100),
@@ -189,7 +195,8 @@ async function start() {
         req.file?.mimetype || null,
         req.file?.buffer || null,
         layout?.paper.id || null,
-        layout?.sheetCount || null
+        layout?.sheetCount || null,
+        layout ? cropMode : null
       ]);
       res.status(201).json({
         id: result.lastInsertId,
@@ -290,7 +297,7 @@ async function start() {
   app.get("/api/admin/orders/:id/layout.pdf", requireAdmin, async (req, res, next) => {
     try {
       const order = await db.get(`
-        SELECT o.reference, o.quantity, o.paper, o.file_name, o.file_data, s.layout_json
+        SELECT o.reference, o.quantity, o.paper, o.crop_mode, o.file_name, o.file_data, s.layout_json
         FROM orders o JOIN services s ON s.id = o.service_id WHERE o.id = ?
       `, [req.params.id]);
       const image = order?.file_data
@@ -300,7 +307,7 @@ async function start() {
           : null;
       const spec = parseLayout(order?.layout_json);
       if (!image || !spec) return res.status(404).send("No printable layout is available.");
-      const pdf = await createPhotoLayout(image, spec, order.paper, order.quantity);
+      const pdf = await createPhotoLayout(image, spec, order.paper, order.quantity, req.query.crop || order.crop_mode);
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `inline; filename="${order.reference}-layout.pdf"`);
       res.send(Buffer.from(pdf));

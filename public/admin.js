@@ -61,7 +61,8 @@ function renderOrders() {
       <td>${escapeHtml(order.customer_name || "Walk-in")}<br><small>${escapeHtml(order.contact || "")}</small></td>
       <td class="service-cell">${escapeHtml(order.service_name)}</td>
       <td>${order.quantity}</td>
-      <td>${escapeHtml((order.paper || "—").toUpperCase())}</td>
+      <td>${escapeHtml((order.paper || "—").toUpperCase())}${order.crop_mode
+        ? `<br><small>${order.crop_mode === "fill" ? "cropped" : "buo"}</small>` : ""}</td>
       <td>${order.sheets || "—"}</td>
       <td>${peso(order.total)}</td>
       <td>

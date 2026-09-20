@@ -13,19 +13,19 @@ const catalog = [
   ["lam-nametag", "Lamination", "Nametag", null],
   ["photo-1x1", "Photo Printing", "1×1 ID Photo", {
     pieces: [{ width: 1, height: 1, count: 1 }],
-    papers: ["2r", "3r", "4r", "5r", "a4"],
+    papers: ["2r", "3r", "4r", "5r", "a5", "a4"],
     paper: "4r",
     unit: "pcs"
   }],
   ["photo-2x2", "Photo Printing", "2×2 ID Photo", {
     pieces: [{ width: 2, height: 2, count: 1 }],
-    papers: ["3r", "4r", "5r", "a4"],
+    papers: ["3r", "4r", "5r", "a5", "a4"],
     paper: "4r",
     unit: "pcs"
   }],
   ["photo-passport", "Photo Printing", "Passport Size", {
     pieces: [{ width: 1.38, height: 1.77, count: 1 }],
-    papers: ["3r", "4r", "5r", "a4"],
+    papers: ["3r", "4r", "5r", "a5", "a4"],
     paper: "4r",
     unit: "pcs"
   }],
@@ -33,46 +33,47 @@ const catalog = [
   ["photo-3r", "Photo Printing", "3R Size", { fill: true, papers: ["3r"], paper: "3r", unit: "sheet" }],
   ["photo-4r", "Photo Printing", "4R Size", { fill: true, papers: ["4r"], paper: "4r", unit: "sheet" }],
   ["photo-5r", "Photo Printing", "5R Size", { fill: true, papers: ["5r"], paper: "5r", unit: "sheet" }],
+  ["photo-a5", "Photo Printing", "A5 Size", { fill: true, papers: ["a5"], paper: "a5", unit: "sheet" }],
   ["photo-a4", "Photo Printing", "A4 Size", { fill: true, papers: ["a4"], paper: "a4", unit: "sheet" }],
   ["rush-a", "Rush ID Packages", "SET A: 2×2 (2pcs), 1×1 (4pcs)", {
     pieces: [{ width: 2, height: 2, count: 2 }, { width: 1, height: 1, count: 4 }],
-    papers: ["3r", "4r", "5r", "a4"],
+    papers: ["3r", "4r", "5r", "a5", "a4"],
     paper: "4r",
     unit: "set"
   }],
   ["rush-b", "Rush ID Packages", "SET B: 1×1 (6pcs)", {
     pieces: [{ width: 1, height: 1, count: 6 }],
-    papers: ["2r", "3r", "4r", "5r", "a4"],
+    papers: ["2r", "3r", "4r", "5r", "a5", "a4"],
     paper: "3r",
     unit: "set"
   }],
   ["rush-c", "Rush ID Packages", "SET C: 2×2 (6pcs)", {
     pieces: [{ width: 2, height: 2, count: 6 }],
-    papers: ["4r", "5r", "a4"],
+    papers: ["4r", "5r", "a5", "a4"],
     paper: "4r",
     unit: "set"
   }],
   ["rush-d", "Rush ID Packages", "SET D: Passport (4pcs), 1×1 (3pcs)", {
     pieces: [{ width: 1.38, height: 1.77, count: 4 }, { width: 1, height: 1, count: 3 }],
-    papers: ["3r", "4r", "5r", "a4"],
+    papers: ["3r", "4r", "5r", "a5", "a4"],
     paper: "4r",
     unit: "set"
   }],
   ["instax-mini", "Instax — Polaroid Inspired", "Mini (10pcs)", {
     pieces: [{ width: 2.13, height: 3.39, count: 10 }],
-    papers: ["a4", "5r"],
+    papers: ["a4", "a5", "5r"],
     paper: "a4",
     unit: "set"
   }],
   ["instax-square", "Instax — Polaroid Inspired", "Square (8pcs)", {
     pieces: [{ width: 2.83, height: 3.39, count: 8 }],
-    papers: ["a4"],
+    papers: ["a4", "a5"],
     paper: "a4",
     unit: "set"
   }],
   ["instax-wide", "Instax — Polaroid Inspired", "Wide (5pcs)", {
     pieces: [{ width: 4.25, height: 3.39, count: 5 }],
-    papers: ["a4"],
+    papers: ["a4", "a5"],
     paper: "a4",
     unit: "set"
   }],
@@ -210,6 +211,7 @@ async function openDatabase() {
         file_data LONGBLOB,
         paper VARCHAR(20),
         sheets INT,
+        crop_mode VARCHAR(20),
         status VARCHAR(32) NOT NULL DEFAULT 'New',
         created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
@@ -220,6 +222,7 @@ async function openDatabase() {
     const names = existing.map(column => column.name || column.NAME);
     if (!names.includes("paper")) await pool.query("ALTER TABLE orders ADD COLUMN paper VARCHAR(20)");
     if (!names.includes("sheets")) await pool.query("ALTER TABLE orders ADD COLUMN sheets INT");
+    if (!names.includes("crop_mode")) await pool.query("ALTER TABLE orders ADD COLUMN crop_mode VARCHAR(20)");
     const db = mysqlApi(pool);
     await seed(db);
     console.log("Using MySQL database.");
@@ -263,6 +266,7 @@ async function openDatabase() {
       file_data BLOB,
       paper TEXT,
       sheets INTEGER,
+      crop_mode TEXT,
       status TEXT NOT NULL DEFAULT 'New',
       created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
     );
@@ -272,6 +276,7 @@ async function openDatabase() {
   if (!columns.includes("file_mime")) sqlite.exec("ALTER TABLE orders ADD COLUMN file_mime TEXT");
   if (!columns.includes("paper")) sqlite.exec("ALTER TABLE orders ADD COLUMN paper TEXT");
   if (!columns.includes("sheets")) sqlite.exec("ALTER TABLE orders ADD COLUMN sheets INTEGER");
+  if (!columns.includes("crop_mode")) sqlite.exec("ALTER TABLE orders ADD COLUMN crop_mode TEXT");
   const db = sqliteApi(sqlite);
   await seed(db);
   return db;

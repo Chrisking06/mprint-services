@@ -47,6 +47,14 @@
           <select id="paper" name="paper"></select>
           <p id="paperHint" class="field-hint"></p>
         </div>
+        <div class="field wide hidden" id="cropField">
+          <label for="cropMode">Photo fitting</label>
+          <select id="cropMode" name="cropMode">
+            <option value="whole">Buong larawan — walang maputol (recommended)</option>
+            <option value="fill">Punuin ang frame — may crop sa ibaba</option>
+          </select>
+          <p class="field-hint">Ang “buong larawan” ay hindi pumuputol ng buhok o ulo.</p>
+        </div>
         <div class="field">
           <label for="quantity">Quantity * <span id="unitLabel"></span></label>
           <div class="quantity-control">

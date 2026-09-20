@@ -5,6 +5,7 @@ const imageInput = document.querySelector("#image");
 const paperField = document.querySelector("#paperField");
 const paperSelect = document.querySelector("#paper");
 const paperHint = document.querySelector("#paperHint");
+const cropField = document.querySelector("#cropField");
 const previewWrap = document.querySelector("#previewWrap");
 const preview = document.querySelector("#preview");
 const message = document.querySelector("#formMessage");
@@ -46,6 +47,7 @@ function selectedService() {
 const unitWords = { pcs: "(pieces)", set: "(sets)", sheet: "(sheets)" };
 
 function renderPaperOptions(service) {
+  cropField.classList.toggle("hidden", !service?.hasLayout);
   if (!service?.papers?.length) {
     paperField.classList.add("hidden");
     paperSelect.innerHTML = "";

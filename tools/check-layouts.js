@@ -2,9 +2,9 @@
 const { plan, piecesPerSheet, PAPERS } = require("../layouts");
 
 const specs = {
-  "1×1": { pieces: [{ width: 1, height: 1, count: 1 }], papers: ["2r", "3r", "4r", "5r", "a4"] },
-  "2×2": { pieces: [{ width: 2, height: 2, count: 1 }], papers: ["3r", "4r", "5r", "a4"] },
-  Passport: { pieces: [{ width: 1.38, height: 1.77, count: 1 }], papers: ["3r", "4r", "5r", "a4"] }
+  "1×1": { pieces: [{ width: 1, height: 1, count: 1 }], papers: ["2r", "3r", "4r", "5r", "a5", "a4"] },
+  "2×2": { pieces: [{ width: 2, height: 2, count: 1 }], papers: ["3r", "4r", "5r", "a5", "a4"] },
+  Passport: { pieces: [{ width: 1.38, height: 1.77, count: 1 }], papers: ["3r", "4r", "5r", "a5", "a4"] }
 };
 
 for (const [label, spec] of Object.entries(specs)) {
@@ -15,11 +15,11 @@ for (const [label, spec] of Object.entries(specs)) {
 const sets = {
   "SET A (2×2 x2 + 1×1 x4)": {
     pieces: [{ width: 2, height: 2, count: 2 }, { width: 1, height: 1, count: 4 }],
-    papers: ["3r", "4r", "5r", "a4"],
+    papers: ["3r", "4r", "5r", "a5", "a4"],
     paper: "4r"
   },
-  "SET C (2×2 x6)": { pieces: [{ width: 2, height: 2, count: 6 }], papers: ["4r", "5r", "a4"], paper: "4r" },
-  "Instax Mini x10": { pieces: [{ width: 2.13, height: 3.39, count: 10 }], papers: ["a4", "5r"], paper: "a4" }
+  "SET C (2×2 x6)": { pieces: [{ width: 2, height: 2, count: 6 }], papers: ["4r", "5r", "a5", "a4"], paper: "4r" },
+  "Instax Mini x10": { pieces: [{ width: 2.13, height: 3.39, count: 10 }], papers: ["a4", "a5", "5r"], paper: "a4" }
 };
 
 console.log();
