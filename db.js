@@ -317,4 +317,4 @@ async function openDatabase() {
   return db;
 }
 
-module.exports = { openDatabase };
+module.exports = { openDatabase, defaultPrices };
