@@ -52,6 +52,14 @@ Open an order in the admin dashboard and click **Print PDF**. The generated PDF 
 
 Prices start at zero because no price amounts were provided. Update them under **Services & prices** in the admin page.
 
+## Suggested prices
+
+On a new database, the app adds mid-market Philippine suggested prices. Existing
+non-zero prices edited in the admin panel are preserved. The starting rates were
+benchmarked against 2025–2026 listings from Darling Prints/PakiPrint, ZoomOut
+Studio, MS Prints, CRXTINA Printing, and Digibili's Philippine lamination guide.
+Actual rates vary by location, paper brand, ink, editing work, and finish.
+
 ## Branding
 
 The logo lives in `public/img/`:

@@ -33,7 +33,10 @@ async function loadServices() {
     items.forEach(service => {
       const option = document.createElement("option");
       option.value = service.id;
-      option.textContent = `${service.name}${service.price ? ` — ${peso(service.price)}` : ""}`;
+      const unit = service.unit === "set" ? " / set"
+        : service.unit === "sheet" ? " / sheet"
+          : " / pc";
+      option.textContent = `${service.name}${service.price ? ` — ${peso(service.price)}${unit}` : ""}`;
       group.append(option);
     });
     serviceSelect.append(group);

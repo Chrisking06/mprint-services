@@ -80,6 +80,37 @@ const catalog = [
   ["sticker-a4", "Sticker Printing", "Print Only (A4)", { fill: true, papers: ["a4"], paper: "a4", unit: "sheet" }]
 ];
 
+// Suggested Philippine retail rates (PHP), based on 2025–2026 local print-shop
+// price lists. Applied only when the current price is still zero, so prices
+// edited by the admin are never overwritten on restart or deploy.
+const defaultPrices = {
+  "lam-2r": 20,
+  "lam-3r": 30,
+  "lam-4r": 35,
+  "lam-5r": 45,
+  "lam-6r": 55,
+  "lam-a5": 35,
+  "lam-a4": 60,
+  "lam-nametag": 20,
+  "photo-1x1": 5,
+  "photo-2x2": 8,
+  "photo-passport": 10,
+  "photo-2r": 15,
+  "photo-3r": 20,
+  "photo-4r": 25,
+  "photo-5r": 35,
+  "photo-a5": 35,
+  "photo-a4": 60,
+  "rush-a": 60,
+  "rush-b": 40,
+  "rush-c": 80,
+  "rush-d": 70,
+  "instax-mini": 40,
+  "instax-square": 45,
+  "instax-wide": 40,
+  "sticker-a4": 35
+};
+
 function toMysql(sql) {
   return sql
     .replaceAll("INSERT OR IGNORE", "INSERT IGNORE")
@@ -145,6 +176,10 @@ function mysqlApi(pool) {
 async function seed(db) {
   for (const [index, item] of catalog.entries()) {
     await db.upsertService([item[0], item[1], item[2], item[3] ? JSON.stringify(item[3]) : null, index]);
+    await db.run("UPDATE services SET price = ? WHERE id = ? AND price = 0", [
+      defaultPrices[item[0]] || 0,
+      item[0]
+    ]);
   }
   const keep = catalog.map(item => item[0]);
   const placeholders = keep.map(() => "?").join(", ");
