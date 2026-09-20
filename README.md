@@ -16,6 +16,23 @@ Local-network ordering, admin tracking, pricing, image upload, and automatic A4 
 
 Allow Node.js through Windows Defender Firewall for **Private networks** if Windows asks.
 
+## Live website (iPad, no PC)
+
+The shop can run on the internet so Safari on iPhone/iPad can open it.
+
+1. Create a free MySQL database at [TiDB Cloud](https://tidbcloud.com/) (Starter). Copy the connection string. It looks like `mysql://...`.
+2. Open this deploy link and sign in with GitHub:
+
+   https://render.com/deploy?repo=https://github.com/Chrisking06/mprint-services
+
+3. Paste:
+   - `ADMIN_PASSWORD` — a strong password
+   - `DATABASE_URL` — the TiDB connection string
+4. After deploy, Render shows a URL such as `https://mprint-services.onrender.com`.
+5. Customer page: that URL. Admin: `/admin.html`.
+
+The free Render web service sleeps after idle time. The first open after sleep can take about a minute. Without `DATABASE_URL`, orders are not kept after restart.
+
 ## First login
 
 - Admin page: `http://localhost:3000/admin.html`
